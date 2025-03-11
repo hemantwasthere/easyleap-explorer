@@ -12,75 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-
-// Update the sample data to include amount information
-// const transactions = [
-//   {
-//     id: 1,
-//     sourceTransaction: "0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t",
-//     sourceChain: "Ethereum",
-//     bridgeTransaction: "0xabcdef1234567890abcdef1234567890abcdef12",
-//     amount: "100 ETH",
-//     status: "Successful",
-//   },
-//   {
-//     id: 2,
-//     sourceTransaction: "0x2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a",
-//     sourceChain: "Polygon",
-//     bridgeTransaction: "0x1234567890abcdef1234567890abcdef12345678",
-//     amount: "10000 MATIC",
-//     status: "Pending",
-//   },
-//   {
-//     id: 3,
-//     sourceTransaction: "0x3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b",
-//     sourceChain: "Arbitrum",
-//     bridgeTransaction: "0x7890abcdef1234567890abcdef1234567890abcd",
-//     amount: "500 ARB",
-//     status: "Refunded",
-//   },
-//   {
-//     id: 4,
-//     sourceTransaction: "0x4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b3c",
-//     sourceChain: "Optimism",
-//     bridgeTransaction: "0xef1234567890abcdef1234567890abcdef123456",
-//     amount: "250 OP",
-//     status: "Successful",
-//   },
-//   {
-//     id: 5,
-//     sourceTransaction: "0x5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b3c4d",
-//     sourceChain: "Avalanche",
-//     bridgeTransaction: "0x90abcdef1234567890abcdef1234567890abcdef",
-//     amount: "10000 STRK",
-//     status: "Pending",
-//   },
-//   {
-//     id: 6,
-//     sourceTransaction: "0x6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b3c4d5e",
-//     sourceChain: "Ethereum",
-//     bridgeTransaction: "0xabcdef1234567890abcdef1234567890abcdef34",
-//     amount: "75 ETH",
-//     status: "Successful",
-//   },
-//   {
-//     id: 7,
-//     sourceTransaction: "0x7g8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b3c4d5e6f",
-//     sourceChain: "Polygon",
-//     bridgeTransaction: "0x1234567890abcdef1234567890abcdef12345612",
-//     amount: "5000 MATIC",
-//     status: "Pending",
-//   },
-//   {
-//     id: 8,
-//     sourceTransaction: "0x8h9i0j1k2l3m4n5o6p7q8r9s0t1a2b3c4d5e6f7g",
-//     sourceChain: "Arbitrum",
-//     bridgeTransaction: "0x7890abcdef1234567890abcdef1234567890ef12",
-//     amount: "300 ARB",
-//     status: "Refunded",
-//   },
-// ];
+import { cn, getTokenInfoFromAddr } from "@/lib/utils";
+import Link from "next/link";
 
 // Update the component to include pagination
 export default function TransactionTable({ txns }: { txns: any }) {
@@ -89,22 +22,42 @@ export default function TransactionTable({ txns }: { txns: any }) {
 
   const itemsPerPage = 5;
 
-  // filter the transactions if any txn has status as "pending" and same request id of that txn also exists with status "confirmed" then only take the txn with status "confirmed"
   const filteredTxns = txns?.findManyDestination_requests.filter((txn: any) => {
-    const pendingTxn = txns?.findManyDestination_requests.find(
-      (tx: any) => tx.request_id === txn.request_id && tx.status === "pending"
+    const sameRequestTxns = txns?.findManyDestination_requests.filter(
+      (tx: any) => tx.request_id === txn.request_id
     );
-    return txn.status === "confirmed" || !pendingTxn;
+
+    const hasConfirmed = sameRequestTxns.some(
+      (tx: any) => tx.status === "confirmed"
+    );
+
+    if (hasConfirmed) {
+      return txn.status === "confirmed";
+    }
+
+    return txn.status === "pending";
   });
 
-  const transactions = filteredTxns.map((txn: any) => ({
-    id: txn.request_id,
-    sourceTransaction: txn.txHash,
-    sourceChain: txn.chain,
-    bridgeTransaction: txn.txHash,
-    amount: txn.amount_raw,
-    status: txn.status,
-  }));
+  const transactions = filteredTxns.map((txn: any) => {
+    const srcTxn = txns?.findManySource_requests.find(
+      (tx: any) => tx.request_id === txn.request_id
+    );
+
+    let bridgeTxnHash = txns?.findManyDestination_requests
+      ?.filter((tx: any) => tx?.request_id === txn?.request_id)
+      .find((tx: any) => tx?.status === "pending")?.txHash;
+
+    return {
+      id: txn.request_id,
+      sourceTransaction: srcTxn?.txHash ?? null,
+      sourceChain: srcTxn?.chain ?? null,
+      bridgeTransaction: bridgeTxnHash ?? "",
+      amount: txn.amount_raw,
+      status: txn.status,
+      txHash: txn.txHash,
+      token: txn.token,
+    };
+  });
 
   // Calculate pagination
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
@@ -160,27 +113,33 @@ export default function TransactionTable({ txns }: { txns: any }) {
             >
               <TableCell>{transaction.id}</TableCell>
               <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  <span className="cursor-pointer text-blue-400 hover:underline">
-                    {truncateHash(transaction.sourceTransaction)}
-                  </span>
-                  <button
-                    onClick={() =>
-                      copyToClipboard(transaction.sourceTransaction)
-                    }
-                    className="text-slate-400 hover:text-blue-400 transition-colors"
-                    title="Copy to clipboard"
-                  >
-                    <Copy className="h-4 w-4" />
-                    {copiedText === transaction.sourceTransaction && (
-                      <span className="absolute ml-1 text-xs text-green-400">
-                        Copied!
-                      </span>
-                    )}
-                  </button>
-                </div>
+                {transaction.sourceTransaction ? (
+                  <div className="flex items-center gap-2">
+                    <span className="cursor-pointer text-blue-400 hover:underline">
+                      {truncateHash(transaction.sourceTransaction)}
+                    </span>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(transaction.sourceTransaction)
+                      }
+                      className="text-slate-400 hover:text-blue-400 transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      <Copy className="h-4 w-4" />
+                      {copiedText === transaction.sourceTransaction && (
+                        <span className="absolute ml-1 text-xs text-green-400">
+                          Copied!
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="ml-4">-</span>
+                )}
               </TableCell>
-              <TableCell>{transaction.sourceChain}</TableCell>
+              <TableCell>
+                {transaction.sourceChain ?? <span className="ml-4">-</span>}
+              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <span className="cursor-pointer text-blue-400 hover:underline">
@@ -203,32 +162,39 @@ export default function TransactionTable({ txns }: { txns: any }) {
                 </div>
               </TableCell>
               <TableCell className="font-medium text-slate-300">
-                {transaction.amount}
+                {Number(transaction.amount) / 10 ** 18}{" "}
+                {getTokenInfoFromAddr(transaction?.token).name}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
                       "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      transaction.status === "Successful" &&
+                      transaction.status === "confirmed" &&
                         "bg-green-900/20 text-green-400",
-                      transaction.status === "Pending" &&
+                      transaction.status === "pending" &&
                         "bg-yellow-900/20 text-yellow-400",
                       transaction.status === "Refunded" &&
                         "bg-red-900/20 text-red-400"
                     )}
                   >
-                    {transaction.status}
+                    {transaction.status === "confirmed"
+                      ? "Successful"
+                      : transaction.status === "pending"
+                      ? "Pending"
+                      : "Refunded"}
                   </span>
-                  {(transaction.status === "Successful" ||
+
+                  {(transaction.status === "confirmed" ||
                     transaction.status === "Refunded") && (
-                    <a
-                      href="#"
+                    <Link
+                      href={`https://sepolia.voyager.online/tx/${transaction?.txHash}`}
+                      target="_blank"
                       className="text-slate-400 hover:text-blue-400 transition-colors"
                       title="View on explorer"
                     >
                       <ExternalLink className="h-4 w-4" />
-                    </a>
+                    </Link>
                   )}
                 </div>
               </TableCell>
