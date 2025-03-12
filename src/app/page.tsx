@@ -1,4 +1,5 @@
 import Navbar from "@/components/navbar";
+import { type StatusBadgeProps } from "@/components/status-badge";
 import { type Column } from "@/components/table/columns";
 import TransactionTable from "@/components/transaction-table";
 import { getTransactions } from "@/hooks/transactions";
@@ -31,13 +32,20 @@ export default async function Home() {
       ?.filter((tx: any) => tx?.request_id === txn?.request_id)
       .find((tx: any) => tx?.status === "pending")?.txHash;
 
+    let formattedStatus: StatusBadgeProps["status"] =
+      txn.status === "confirmed"
+        ? "Successful"
+        : txn.status === "pending"
+        ? "Pending"
+        : "Refunded";
+
     return {
       requestId: txn.request_id,
       srcTxn: srcTxn?.txHash ?? null,
       srcChain: srcTxn?.chain ?? null,
       bridgeTxn: bridgeTxnHash ?? "",
       amount: txn.amount_raw,
-      status: txn.status,
+      status: formattedStatus,
       txHash: txn.txHash,
       token: txn.token,
     } as Column;
@@ -45,14 +53,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
-      <Navbar transactions={transactions} />
+      <Navbar />
 
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold text-slate-100">
-          Bridge Transactions
-        </h1>
-        <TransactionTable transactions={transactions} />
-      </main>
+      <TransactionTable transactions={transactions} />
     </div>
   );
 }
