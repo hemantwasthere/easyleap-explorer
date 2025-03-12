@@ -17,7 +17,7 @@ export default function TransactionTable({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // Calculate pagination
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
@@ -70,7 +70,7 @@ export default function TransactionTable({
             <span className="sr-only">Go to previous page</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
                 key={page}

@@ -65,7 +65,7 @@ export default function Navbar({ transactions }: { transactions: Column[] }) {
             <Input
               type="search"
               placeholder="Search transactions..."
-              className="w-full bg-slate-800 border-slate-700 pl-8 text-slate-200 placeholder:text-slate-400 focus-visible:ring-blue-500"
+              className="w-full bg-slate-800 border-slate-700 pl-8 pr-4 text-slate-200 placeholder:text-slate-400 focus-visible:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setShowResults(true)}
@@ -80,7 +80,7 @@ export default function Navbar({ transactions }: { transactions: Column[] }) {
                   key={txn.txHash}
                   className="px-4 py-2 hover:bg-slate-700 cursor-pointer text-slate-200 flex items-center text-xs"
                 >
-                  Request ID - {txn.requestId}: {"  "}
+                  Request ID: {txn.requestId} - {"  "}
                   {truncateHash(txn.bridgeTxn, 16, 16)}
                 </div>
               ))}
