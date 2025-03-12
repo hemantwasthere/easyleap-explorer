@@ -48,6 +48,10 @@ export default async function Home() {
       status: formattedStatus,
       txHash: txn.txHash,
       token: txn.token,
+      srcBlockNo: srcTxn?.block_number,
+      srcTimestamp: srcTxn?.timestamp,
+      destBlockNo: txn.block_number,
+      destTimestamp: txn.timestamp,
     } as Column;
   });
 

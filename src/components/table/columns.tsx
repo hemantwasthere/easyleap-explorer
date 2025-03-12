@@ -3,7 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 
-import { getTokenInfoFromAddr, truncateHash } from "@/lib/utils";
+import { useGetTokensInfo } from "@/hooks/token";
+import { formatDate, getTokenInfoFromAddr, truncateHash } from "@/lib/utils";
 
 import { CopyButton } from "../copy-button";
 import { StatusBadge, StatusBadgeProps } from "../status-badge";
@@ -17,11 +18,15 @@ export type Column = {
   status: StatusBadgeProps["status"];
   txHash: string;
   token: string;
+  srcBlockNo: string;
+  srcTimestamp: string;
+  destBlockNo: string;
+  destTimestamp: string;
 };
 
 export const columns: ColumnDef<Column>[] = [
   {
-    accessorKey: "request_id",
+    accessorKey: "requestId",
     header: "Request ID",
     cell: ({ row }) => row.original.requestId,
   },
@@ -30,12 +35,21 @@ export const columns: ColumnDef<Column>[] = [
     header: "Source Transaction",
     cell: ({ row }) => {
       const srcTxn = row.original.srcTxn;
+
       return srcTxn ? (
-        <div className="flex items-center gap-2">
-          <span className="cursor-pointer text-blue-400 hover:underline">
-            {truncateHash(srcTxn)}
-          </span>
-          <CopyButton text={srcTxn} />
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="cursor-pointer text-blue-400 hover:underline font-medium">
+              {truncateHash(srcTxn)}
+            </span>
+            <CopyButton text={srcTxn} />
+          </div>
+          <div className="mt-1 text-xs text-slate-400 flex flex-col font-medium">
+            <span>Block: {row.original.srcBlockNo}</span>
+            <span>
+              {formatDate(new Date(Number(row.original.srcTimestamp) * 1000))}
+            </span>
+          </div>
         </div>
       ) : (
         <span className="ml-4">-</span>
@@ -53,11 +67,19 @@ export const columns: ColumnDef<Column>[] = [
     cell: ({ row }) => {
       const bridgeTxn = row.original.bridgeTxn;
       return (
-        <div className="flex items-center gap-2">
-          <span className="cursor-pointer text-blue-400 hover:underline">
-            {truncateHash(bridgeTxn)}
-          </span>
-          <CopyButton text={bridgeTxn} />
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="cursor-pointer text-blue-400 hover:underline font-medium">
+              {truncateHash(bridgeTxn)}
+            </span>
+            <CopyButton text={bridgeTxn} />
+          </div>
+          <div className="mt-1 text-xs text-slate-400 flex flex-col font-medium">
+            <span>Block: {row.original.destBlockNo}</span>
+            <span>
+              {formatDate(new Date(Number(row.original.destTimestamp) * 1000))}
+            </span>
+          </div>
         </div>
       );
     },
@@ -73,11 +95,19 @@ export const columns: ColumnDef<Column>[] = [
     accessorKey: "amount",
     header: "Amount",
     cell: ({ row }) => {
-      const amount = Number(row.original.amount) / 10 ** 18;
+      const tokenInfo = useGetTokensInfo(row.original.token);
 
-      const tokenName = getTokenInfoFromAddr(row.original.token).name;
+      const amount =
+        Number(row.original.amount) / 10 ** (tokenInfo?.decimals ?? 18);
 
-      return <span>{`${amount} ${tokenName}`}</span>;
+      return (
+        <p className="font-medium flex items-center gap-2">
+          {amount}
+          <span className="text-sm font-semibold">
+            {tokenInfo?.name ?? "..."}
+          </span>
+        </p>
+      );
     },
   },
   {

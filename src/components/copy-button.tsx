@@ -22,7 +22,7 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(({ text }) => {
       className="relative text-slate-400 hover:text-blue-400 transition-colors"
       title="Copy to clipboard"
     >
-      <Copy className="h-4 w-4" />
+      <Copy className="h-4 w-4 cursor-pointer" />
       {isCopied && (
         <span className="absolute top-0 -right-12 text-xs text-green-400">
           Copied!
