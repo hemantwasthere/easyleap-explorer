@@ -40,6 +40,7 @@ export const getTransactions = async () => {
         }
       }
     `,
+    // pollInterval: 60000,
   });
 
   return data;

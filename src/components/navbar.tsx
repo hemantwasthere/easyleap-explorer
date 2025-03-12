@@ -55,7 +55,7 @@ export default function Navbar({ transactions }: { transactions: Column[] }) {
               <path d="M18 9h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2" />
               <path d="M6 5v14" />
             </svg>
-            BridgeTracker
+            Easyleap Explorer
           </Link>
         </div>
 
