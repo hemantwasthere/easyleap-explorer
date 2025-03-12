@@ -1,3 +1,5 @@
+"use server";
+
 import { gql } from "@apollo/client";
 
 import apolloClient from "@/lib/apollo-client";

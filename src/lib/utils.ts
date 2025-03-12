@@ -26,3 +26,16 @@ export function getTokenInfoFromAddr(tokenAddr: string) {
   }
   return info;
 }
+
+export const truncateHash = (
+  hash: string,
+  start: number = 6,
+  end: number = 3
+) => {
+  return `${hash?.substring(0, start)}...${hash?.substring(hash.length - end)}`;
+};
+
+// Function to copy text to clipboard
+export const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
